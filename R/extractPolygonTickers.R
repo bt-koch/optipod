@@ -34,6 +34,13 @@ extractPolygonTickers <- function(apikey, search = NA, limit=100){
   # make API request
   response <- fromJSON(url)
 
-  return(response$results)
+  # extract relevant data
+  df <- response$results
+
+  if(nrow(df) == 1000){
+    warning("Attention, API request limit reached. Possible more data available.")
+  }
+
+  return(df)
 
 }
