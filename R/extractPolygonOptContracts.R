@@ -21,7 +21,7 @@ extractPolygonOptContracts <- function(apikey, tickers, from, to, database,
   db <- dbConnect(RSQLite::SQLite(), database)
 
   # GET: /v2/aggs/ticker/{optionsTicker}/range/{multiplier}/{timespan}/{from}/{to}
-  # "https://api.polygon.io/v2/aggs/ticker/", ticker, "/range/1/day/2021-06-01/2022-01-21?adjusted=true&sort=asc&limit=120&apiKey=K6dtqgoGAYKZRquGbfSsk0cpL76VG2pl"
+  
   # base url for ticker dataset
   url_base <- "https://api.polygon.io"
   url_data <- "/v2/aggs/ticker/"
