@@ -6,3 +6,9 @@
 data/apikey.txt
 data/polygonDB.rsqlite
 test.R
+R/estimatePoD.R
+R/g.R
+R/posterior.R
+R/prior.R
+R/objectiveFunction.R
+data/tickers.rds
