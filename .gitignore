@@ -12,4 +12,3 @@ R/posterior.R
 R/prior.R
 R/objectiveFunction.R
 data/tickers.rds
-R/extractPolygonOptContracts.R
