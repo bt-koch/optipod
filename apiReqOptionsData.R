@@ -24,7 +24,7 @@ library(jsonlite)
 # =============================================================================.
 # 1. Get Options Data via polygon.io API ----
 # =============================================================================.
-cat("\nLoad and prepare data...")
+cat("\nAPI request...")
 
 # get tickers for all options
 db <- dbConnect(RSQLite::SQLite(), database)
