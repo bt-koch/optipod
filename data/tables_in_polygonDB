@@ -1,0 +1,9 @@
+dataset: contains the prepared dataset for estimation (polygon data)
+dataset_WRDS: contains the prepared dataset for estimation (WRDS data, only CS)
+options: contains all retrieved options data retrieved from polygon
+results: contrains all estimates using multiplication factor 5 (polygon data)
+results_WRDS: contains all estimates using muliplication factor 5 (WRDS data, only CS)
+results_multip10: contains estimates for CS using multiplication factor 10 (only polygon)
+results_multip30: contains estimates for CS using multiplication factor 30 (polygon and WRDS)
+stocks: contains all relevant stock data retrieved from polygon
+tickers: contains meta data about option stickers (relevant for polygon data)
