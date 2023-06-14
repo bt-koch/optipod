@@ -45,3 +45,8 @@ methodology." Available at SSRN 2797025. Note that the code was provided
 by Johannes Vilsmeier but was refactored, therefore possible errors might
 were included in original code.
 }
+\details{
+Note that all vectors must be ordered by strike price (ascending), such that
+the first element corresponds to the current stock price which is included
+with a strike price of zero.
+}

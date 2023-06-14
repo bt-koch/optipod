@@ -6,6 +6,10 @@
 #' by Johannes Vilsmeier but was refactored, therefore possible errors might
 #' were included in original code.
 #'
+#' Note that all vectors must be ordered by strike price (ascending), such that
+#' the first element corresponds to the current stock price which is included
+#' with a strike price of zero.
+#'
 #' @param mu vector of option prices
 #' @param K  vector of strike prices
 #' @param r annual risk free interest rate (in decimals)
