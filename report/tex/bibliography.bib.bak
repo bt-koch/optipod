@@ -1,0 +1,158 @@
+@Article{capuano2008,
+  author  = {Capuano, Christian},
+  journal = {IMF Working Paper},
+  title   = {The Option-iPoD: The Probability of Default Implied by Option Prices Based on Entropy},
+  year    = {2008},
+  month   = {August},
+  number  = {08/194},
+}
+
+@Article{merton1974,
+  author    = {Merton, Robert C},
+  journal   = {The Journal of finance},
+  title     = {On the pricing of corporate debt: The risk structure of interest rates},
+  year      = {1974},
+  number    = {2},
+  pages     = {449--470},
+  volume    = {29},
+  publisher = {JSTOR},
+}
+
+@Article{vilsmeier2014,
+  author  = {Vilsmeier, Johannes},
+  journal = {Bundesbank Discussion Paper},
+  title   = {Updating the option implied probability of default methodology},
+  year    = {2014},
+  number  = {43/2014},
+}
+
+@Article{kullback1951,
+  author    = {Kullback, Solomon and Leibler, Richard A},
+  journal   = {The annals of mathematical statistics},
+  title     = {On information and sufficiency},
+  year      = {1951},
+  number    = {1},
+  pages     = {79--86},
+  volume    = {22},
+  publisher = {JSTOR},
+}
+
+@Article{alhassid1978,
+  author    = {Alhassid, Y and Agmon, N and Levine, RD},
+  journal   = {Chemical Physics Letters},
+  title     = {An upper bound for the entropy and its applications to the maximal entropy problem},
+  year      = {1978},
+  number    = {1},
+  pages     = {22--26},
+  volume    = {53},
+  publisher = {Elsevier},
+}
+
+@Article{hull2004,
+  author  = {Hull, John and Nelken, Izzy and White, Alan},
+  journal = {Journal of Credit Risk Volume},
+  title   = {Merton’s model, credit risk, and volatility skews},
+  year    = {2004},
+  number  = {1},
+  pages   = {05},
+  volume  = {1},
+}
+
+@Article{matros2012,
+  author  = {Matros, Philipp and Vilsmeier, Johannes},
+  journal = {Bundesbank Discussion Paper},
+  title   = {Measuring option implied degree of distress in the us financial sector using the entropy principle},
+  year    = {2012},
+  number  = {30/2012},
+}
+
+@Article{zer2015,
+  author    = {Zer, Ilknur},
+  title     = {Information disclosures, default risk, and bank value},
+  year      = {2015},
+  publisher = {FEDS Working Paper},
+}
+
+@Article{cox1976,
+  author    = {Cox, John C and Ross, Stephen A},
+  journal   = {Journal of financial economics},
+  title     = {The valuation of options for alternative stochastic processes},
+  year      = {1976},
+  number    = {1-2},
+  pages     = {145--166},
+  volume    = {3},
+  publisher = {Elsevier},
+}
+
+@Misc{fed2023,
+  author       = {{Board of Governors of the Federal Reserve System}},
+  howpublished = {\url{https://www.federalreserve.gov/publications/2023-may-financial-stability-report-purpose-and-framework.htm}},
+  note         = {Accessed: June 7, 2023},
+  title        = {{Financial Stability Report, May 2023}},
+  year         = {2023},
+}
+
+@Misc{efd2023,
+  author       = {{Swiss Federal Department of Finance}},
+  howpublished = {\url{https://www.efd.admin.ch/efd/en/home/financial-affairs/ubs-takeover-credit-suisse%20/financial-implications-confederation-cs-ubs.html}},
+  note         = {Accessed: June 7, 2023},
+  title        = {{Takeover of Credit Suisse by UBS: financial implications for the Confederation}},
+  year         = {2023},
+}
+
+@Misc{ecb2014,
+  author       = {{European Central Bank}},
+  howpublished = {\url{https://www.ecb.europa.eu/pub/pdf/fsr/financialstabilityreview201405en.pdf}},
+  note         = {Accessed: June 7, 2023},
+  title        = {{Financial Stability Review, May 2014}},
+  year         = {2014},
+}
+
+@Article{bisias2012,
+  author    = {Bisias, Dimitrios and Flood, Mark and Lo, Andrew W and Valavanis, Stavros},
+  journal   = {Annu. Rev. Financ. Econ.},
+  title     = {A survey of systemic risk analytics},
+  year      = {2012},
+  number    = {1},
+  pages     = {255--296},
+  volume    = {4},
+  publisher = {Annual Reviews},
+}
+
+@Article{matros2012,
+  author  = {Matros, Philipp and Vilsmeier, Johannes},
+  journal = {Available at SSRN 2796890},
+  title   = {Measuring option implied degree of distress in the us financial sector using the entropy principle},
+  year    = {2012},
+}
+
+@Article{jaynes1957,
+  author    = {Jaynes, Edwin T},
+  journal   = {Physical review},
+  title     = {Information theory and statistical mechanics},
+  year      = {1957},
+  number    = {4},
+  pages     = {620},
+  volume    = {106},
+  publisher = {APS},
+}
+
+@Article{longstaff2005,
+  author    = {Longstaff, Francis A and Mithal, Sanjay and Neis, Eric},
+  journal   = {The journal of finance},
+  title     = {Corporate yield spreads: Default risk or liquidity? New evidence from the credit default swap market},
+  year      = {2005},
+  number    = {5},
+  pages     = {2213--2253},
+  volume    = {60},
+  publisher = {Wiley Online Library},
+}
+
+@Article{zer2015information,
+  author    = {Zer, Ilknur},
+  title     = {Information disclosures, default risk, and bank value},
+  year      = {2015},
+  publisher = {FEDS Working Paper},
+}
+
+@Comment{jabref-meta: databaseType:bibtex;}

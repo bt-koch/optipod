@@ -1,0 +1,1368 @@
+---
+output:
+  bookdown::pdf_document2:
+    number_sections: true
+    toc: false
+indent: false
+bibliography: tex/bibliography.bib
+# biblio-style: text/econometrica.bst
+header-includes:
+  - \usepackage{floatrow}
+  - \floatsetup{capposition=top}
+  - \floatplacement{figure}{!ht}
+  - \floatplacement{table}{!ht}
+  - \usepackage{setspace}
+  - \usepackage{algorithm}
+  - \usepackage{algpseudocode}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<!-- Setup -------------------------------------------------------------------->
+
+```{r setup, include=FALSE}
+rm(list=ls()); gc()
+library(DBI)
+library(data.table)
+library(zoo)
+library(devtools); load_all()
+
+# use computer modern font for plots?
+plots_cmfont <- T
+# I leave the option to use font "sans" (base R) since using computer modern
+# font ("LaTeX-font") required some additional installations on my device:
+# R version 4.1.2 (2021-11-01)
+# Platform: aarch64-apple-darwin20 (64-bit)
+# Running under: macOS Monterey 12.4
+# required steps to use computer modern:
+# - install Latin Modern Fonts, e.g. from http://www.fontsquirrel.com/fonts/latin-modern-roman
+#   make sure to download TTF version
+# - import these fonts using extrafont::font_import()
+#   here I received following error message:
+#    Scanning ttf files in my/path/to/fonts ...   
+#    Extracting .afm files from .ttf files...
+#    my/path/to/fonts/lmroman10-bold-webfont.ttf : No FontName. Skipping.
+#   Downgrading package "Rttf2pt1" from version 1.3.9 to 1.3.8 solved this error
+#    package_url <- "https://cran.r-project.org/src/contrib/Archive/Rttf2pt1/Rttf2pt1_1.3.8.tar.gz"
+#    install.packages(package_url, repos=NULL, type="source")
+# - install package Cairo and use it as the graphics device in knitr::opts_chunk$set
+if(plots_cmfont){
+  if(!require(extrafont)) install.packages("extrafont")
+  library(extrafont)
+  loadfonts(device = "all")
+  knitr::opts_chunk$set(dev = "cairo_pdf")
+  fontfamily <- "LM Roman 10"
+} else {
+  fontfamily <- "sans"
+}
+
+knitr::opts_chunk$set(echo = FALSE, fig.align = "center", fig.pos = "H", out.extra = "")
+```
+
+<!-- load relevant data ------------------------------------------------------->
+
+```{r}
+# new
+tickers <- readRDS("../data/tickers.rds")
+
+database <- "../data/polygonDB.rsqlite"
+db <- dbConnect(RSQLite::SQLite(), database)
+
+```
+
+<!-- Title Page --------------------------------------------------------------->
+
+```{=tex}
+\thispagestyle{empty}
+\begin{center}
+    \vspace*{3cm}
+    \Large
+    \textbf{Option-implied Probability of Default \\
+    \large
+    A market-implied measure for financial distress}
+        
+    \vspace{0.4cm}
+    \large
+
+    \vspace{0.2cm}
+    \textbf{Bela Tim Koch} \\
+    17-734-377 \\
+    
+    \vspace{0.11cm}
+    
+    Workshop in Econometrics II (8299) \\
+    Spring Semester 2023 \\
+    \vspace{0.3cm}
+    \textbf{Department of Economics} \\
+    \textbf{University of Bern}
+       
+    \vspace{2cm}
+
+    \large{\textbf{ABSTRACT\footnote{Many thanks to Johannes Vilsmeier and Ilknur Zer
+    who provided me with very useful code used in their studies.}}}
+\end{center}
+\vspace{0.5cm}
+\normalsize
+```
+
+In this paper the so-called option implied probability of default is applied to
+several banks traded in the US market, for the sample period of 1. January 2022
+to 07. June 2023, therefore including the US banking crisis in March 2023.
+A special focus is set on Credit Suisse, which was announced to be taken
+over by UBS on the 19th of March 2023. The turmoil regarding Credit Suisse
+is reflected in the option implied probability of default, however, in this
+application the measure did not give an early warning in this application.
+
+\newpage
+
+<!-- Report ------------------------------------------------------------------->
+
+```{=tex}
+\setcounter{page}{1}
+\onehalfspace
+```
+
+# Introduction and Literature Review
+
+In March 2023, severe stress in the US banking sector was observable, whereby
+several banks ceased their operations. Loss of confidence in banks,
+substantial falls in bank stock prices and a bank run of unprecedented
+proportions characterised this turmoil [@fed2023]. Also in March 2023,
+Switzerland's Federal Council announced
+a package of measures to prevent the globally active and systematically
+important Swiss bank Credit Suisse from failure and thus averted the
+onset of a financial crisis with substantial damage to the Swiss
+financial sector and the national and international economy as a whole
+[@efd2023]. These latest incidents in the financial sector show once 
+again the importance of supervising the financial system to sustain 
+financial and general economic stability.
+
+To access the risk within the financial sector, a distinction can be
+drawn between micro- and macroprudential measures. The former focus on
+the idiosyncratic risk, i.e. the firm specific risk, while the latter tries
+to capture the risk of the entire financial sector. Although
+microprudential measures and its corresponding policy advises and
+regulations try to ensure stability of individual financial firms, the
+macroprudential perspective is necessary for example to incorporate
+interactions among individual financial institutions or feedback loops
+of the financial sector with the real economy [@ecb2014].
+
+This paper examines a framework to derive the probability of default
+for an individual firm implied by the market prices of corresponding
+equity options which was firstly suggested by @capuano2008 and updated
+by @vilsmeier2014. By determining the probability of default of an
+individual firm, the so-called option implied probability of default
+can be classified as a microprudential measure. However, @matros2012
+propose further an indicator based on the option implied probability
+which also signals the degree of distress in the financial sector as
+a whole, extending this concept with a macroprudential component. 
+
+***here include some other similar papers***
+
+@capuano2008 showed for his suggested method and @matros2012 for the
+updated method that the option implied probability of default is capable
+to signal the occurrence of adverse shocks to specific financial
+institution and in @matros2012 also to the financial sector as a whole
+for the US banking sector. This paper tries to contribute to the existing
+literature by testing this framework on the latest turmoil in the US
+banking sector, focusing on Credit Suisse as the only bank that failed
+during the Banking Crisis in 2023 for which the necessary data could
+be obtained.
+
+While the option implied probability of default reacts in this application on
+given events as expected, the results cannot confirm the predictive power of
+this measure compared to Credit Default Swaps, as was found in @capuano2008
+or @matros2012. However, this application should demonstrate the attractiveness
+of this measure in terms of the data required and the potential frequency with
+which estimates can be obtained.
+
+This paper is structured as follows. First, the statistical framework of
+the method suggested by @capuano2008 is described. Next, the
+modifications @vilsmeier2014 proposed to this method are shown. In section
+\@ref(application), the data sources, the data itself as well as the
+empirical implementation is discussed. Section \@ref(results) shows
+and discusses the results of the empirical application.
+
+\newpage
+
+# The Statistical Framework
+
+## Methodology proposed by @capuano2008 {#capuanoframework}
+
+The methodology of measuring the probability of default for a firm
+implied by observed option prices was first suggested by @capuano2008.
+To give intuition about the mechanism behind the suggested methodology,
+@capuano2008 remarks can be followed, for which two components are first
+introduced. The first component assumes the balance sheet structure of a
+firm according to @merton1974. Consequently, to finance its assets $V$,
+a firm either uses its equity $E$ or takes up debt $D$. From the
+perspective of the equity holders of a firm, their payoff is equivalent
+to the remainder of the value of assets after the repayment of
+outstanding debts, since equity is a junior claim on the value of assets.
+Mathematically, the payoff of equity holders can therefore be defined as
+
+```{=tex}
+\begin{equation}
+E = \max(V-D; 0) (\#eq:equity)
+\end{equation}
+```
+
+The second component that is used for the intuition behind the proposed
+methodology are equity options, or more precisely call options on the
+stock of a firm. A call option grants the right to the holder of the
+option to buy the underlying asset, here equity stocks, within a given
+time period^[American options can be exercised at any date before or at
+expiration. European options can only be exercised at expiration. In
+this analysis, we use american style options (due to data
+availability).] at a predetermined price, the strike price $K$. The
+payoff function of a call option at expiration date $T$ is hence given
+as
+
+```{=tex}
+\begin{equation}
+C^K_T = \max(E_T-K; 0) (\#eq:calloption)
+\end{equation}
+```
+
+whereby $E_T$ denotes the price of the stock at expiration $T$. Putting
+the definition of equity according to equation \@ref(eq:equity) into the payoff
+function of a call option according to equation \@ref(eq:calloption), it can be
+seen that a call option written on a stock can be understood as a call
+option on a call option [@hull2004]:
+
+```{=tex}
+\begin{equation}
+C^K_T = \max(E_T-K; 0) = \max(\max(V_T-D; 0)-K; 0) = \max(V_T-D-K; 0) (\#eq:calloncall)
+\end{equation}
+```
+
+Given the balance sheet structure, a firm defaults as soon as the debts
+exceed the value of equity. Put differently, a firm defaults if asset
+value $V$ falls below the value of debt $D$. Hence, the default domain
+of asset value can be represented as
+
+```{=tex}
+\begin{equation}
+PoD(D) = \int^D_0 f(V_T)dV_T (\#eq:pod)
+\end{equation}
+```
+
+whereby $f(V_T)$ is the probability density function of asset value
+[@capuano2008]. To solve the integral given in equation \@ref(eq:pod), both the
+value of $D$ and the probability density function of $V_T$ need to be
+determined. The resulting value corresponds to the marked implied
+probability of default.
+
+To recover the probability distribution of the asset value, @capuano2008
+uses the principle of minimum cross-entropy based on the cross-entropy
+functional introduced by @kullback1951. Using this principle, the
+probability distribution of a random variable can be recovered using
+only what can be observed and without any additional assumptions
+[@capuano2008]. Given that the true distribution is reflected in the
+observed data, this principle results in an estimated distribution which is the
+closest to the true distribution [@jaynes1957]. Only the prior
+distribution ($f^0(V_T)$ in equation \@ref(eq:capuanooptim)) needs to be
+determined, for which the distribution with maximal entropy on the
+defined domain, i.e. the the distribution which provides the most
+uncertainty regarding future outcomes should be chosen [@vilsmeier2014].
+In the empirical implementation, the estimations are made on a closed
+interval, which is why a uniform distribution should be used as the prior
+distribution [@vilsmeier2014].
+
+The optimisation problem given from the principle of minimum cross-entropy 
+in @capuano2008 is as follows:
+
+```{=tex}
+\begin{equation}
+\min_D \biggl\{ \min_{f(V_T)} \int^\infty_{V_T=0} f(V_T) \log \biggl[ \frac{f(V_T)}{f^0(V_T)} \biggr] dV_T \biggr\} (\#eq:capuanooptim)
+\end{equation}
+```
+
+whereby $f^0(V_T)$ corresponds to a prior probability density function
+of asset value, $f(V_T)$ the posterior probability density function and
+
+```{=tex}
+\begin{equation}
+\int^\infty_0 f(V_T) \log \biggl[ \frac{f(V_T)}{f^0(V_T)} \biggr]dV_T = CE[f(V_T), f^0(V_T)] (\#eq:crossentropy)
+\end{equation}
+```
+
+the cross-entropy function between the posterior and prior density
+function as defined in @kullback1951.
+
+@capuano2008 introduces following three constraints for the optimisation
+problem that are all based only on observable information:
+
+Condition 1 states, based on Mertons balance sheet structure, that the
+value of equity is equivalent to a call options value written on the
+value of assets. The stock price observed today ($E_0$) must therefore
+be equivalent to the present value of the stock price at expiration of
+the corresponding option contract, discounted continuously with the risk
+free rate $r$:
+
+```{=tex}
+\begin{equation}
+E_0 = e^{-rT} \int^\infty_{V_T=0} \max(V_T-D;0)f(V_T)dV_T = e^{-rT} \int^\infty_{V_T=D}(V_T-D)f(V_T)dV_T (\#eq:capuanocond1)
+\end{equation}
+```
+
+Condition 2 states that the posterior probability density function needs
+to be able to price the observable option prices. Therefore the observed
+price of call options $i$ must be equivalent to the present value of the
+call options payoff at expiration:
+
+```{=tex}
+\begin{equation}
+C^i_0 = e^{-rT} \int^\infty_{V_T=0} \max(V_T-D-K_i;0)f(V_T)dV_T = e^{-rT} \int^\infty_{V_T=D+K_i}f(V_T)dV_T (\#eq:capuanocond2)
+\end{equation}
+```
+
+The last condition corresponds to the additivity constraint, which
+ensures that the posterior probability density function integrates to 1:
+
+```{=tex}
+\begin{equation}
+\int^\infty_{V_T=0}f(V_T)dV_T = 1 (\#eq:capuanocond3)
+\end{equation}
+```
+
+@capuano2008 solves the optimisation problem stated in equation
+\@ref(eq:capuanooptim) sequentially in two steps. First, the problem is
+solved for the optimal $f(V_T)$ as a function of the free parameter $D$,
+for what following Lagrangian is proposed:
+
+```{=tex}
+\begin{equation}
+\begin{aligned}
+\mathcal{L} ={} & \int^\infty_{V_T=0}f(V_T)\log\biggl[ \frac{f(V_T)}{f^0(V_T)} \biggr]dV_T
++ \lambda_0 \biggl[ 1-\int^\infty_{V_T=0}f(V_T)dV_T \biggr]
++ \lambda_1 \biggl[ E_0 - e^{-rT}\int^\infty_{V_T=D}(V_T-D)f(V_T)dV_T \biggr] \\
+& + \sum^n_{i=1}\lambda_{2,i}\biggl[ C^i_0 - e^{-rT} \int^\infty_{V_T=D+K_i}(V_T-D-K_i)f(V_T)dV_T \biggr] (\#eq:capuanolagrangian)
+\end{aligned}
+\end{equation}
+```
+
+After taking the first order derivatives and some rearranging, following
+system of nonlinear equations is derived, which is solved numerically:
+
+```{=tex}
+\begin{equation}
+\frac{1}{\mu(\lambda)}\frac{\partial\mu(\lambda)}{\partial\lambda_1}=E_0 (\#eq:capuanonum1)
+\end{equation}
+```
+```{=tex}
+\begin{equation}
+\frac{1}{\mu(\lambda)}\frac{\partial\mu(\lambda)}{\partial\lambda_{2,i}}=C^i_0 \qquad\text{for }i=1,2,...,n (\#eq:capuanonum2)
+\end{equation}
+```
+
+whereby
+
+```{=tex}
+\begin{equation}
+\mu(\lambda)=\int^\infty_{V_T=0}f^0(V_T)\exp\bigl[ \lambda_1 e^{-rT}\mathbf{1}_{V_T>D}(V_T-D)+\sum^n_{i=1}\lambda_{2,i}e^{-rT}\mathbf{1}_{V_T>D+K_i}(V_T-D-K_i) \bigr]dV_T
+\end{equation}
+```
+<!-- \begin{equation} -->
+
+<!-- \frac{\partial \mathcal{L}}{\partial \lambda_i} = e^{-rT}\int^\infty_{V_T=0} \mathbf{1}_{V_T>D+K_i}(V_T-D-K_i)f^*(V_T)dV_T-C^{K_i}_0 \stackrel{!}{=} 0 \qquad i=1,...,B (\#eq:nonlinearsystem) -->
+
+<!-- \end{equation} -->
+
+Solving this system yields the optimal probability density function
+$f^*(V_T,D)$ dependent on $D$.
+
+To derive the corresponding optimal $D$, @capuano2008 substitutes
+$f^*(V_T,D)$ into the Lagrangian defined in equation
+\@ref(eq:capuanolagrangian), resulting to following problem
+
+```{=tex}
+\begin{equation}
+\lim_{\Delta \rightarrow 0} \frac{\mathcal{L}(f^*(V_T,D+\Delta))-\mathcal{L}(f^*V_T,D)}{D+\Delta}=0
+\end{equation}
+```
+which is again solved numerically. After the probability density
+function and the threshold for firm default is obtained, the option
+implied probability can be obtained by calculating equation
+\@ref(eq:pod).
+
+## Updated methodology by @vilsmeier2014 {#vilsmeiermethod}
+
+@vilsmeier2014 mentions some problems in the methodology proposed in
+@capuano2008. The first problem concerns the numerical solving of
+equations \@ref(eq:capuanonum1) and \@ref(eq:capuanonum2), which leads
+to unstable solutions and sometimes no solutions at all. @vilsmeier2014
+applies an approach introduced by @alhassid1978 to overcome this problem and
+implements a robust and computationally efficient algorithm to obtain
+the optimal set of $\lambda$ given equation \@ref(eq:capuanonum2)
+(equation \@ref(eq:capuanonum1) is not relevant for the method proposed
+by @vilsmeier2014). @vilsmeier2014 furthermore solved the integrals
+contained in the objective function analytically, which also further
+stabilises the method. Additionally @capuano2008 uses accounting data to
+determine the domain bounds for the risk neutral densities which
+@vilsmeier2014 shows is unnecessary from a statistical point of view and
+can even severely bias the results when the domain derived from
+accounting data is too short. @vilsmeier2014 further shows that by numerically
+solving for the optimal $D$ as in @capuano2008 can lead to arbitrary results.
+
+In contrast to the structural approach in section
+\@ref(capuanoframework), @vilsmeier2014 describes the methodology
+through a purely statistical lens, starting with risk neutral densities,
+which describe the expectations of the stock value $S$ at time of
+maturity $T$ implied by observed option prices for different strike
+prices $K$. To obtain an option implied probability of default,
+traditional approaches for estimating risk neutral densities have to be
+adjusted, such that a mass point in the risk neutral density can be
+estimated which will indicate the probability that stock value $S$ will
+be zero at the time of maturity of the corresponding option (assuming
+that stock value of zero implies a firm's default). Since a continuous
+estimation framework is used to determine the probability of default
+(and therefore a potential jump in the risk neutral density at a stock
+price of zero cannot be estimated) @vilsmeier2014 extends the domain of
+possible stock prices $S_T$ by shifting its domain upwards by some
+constant $D$. All realisations within the additional interval $[0, D]$
+imply a stock price of zero and therefore a default of the firm. Now,
+the probability density function of interest is $f(V_T)$ with
+$V_T=S_T+D$. Using this new domain, the payoff function for a
+call-option at time $T$ can be described as
+
+```{=tex}
+\begin{equation}
+C^{K_i}_T = \max(V_T-D-K_i;0) (\#eq:vilspayoff)
+\end{equation}
+```
+
+equally as in the structural approach shown in equation
+\@ref(eq:calloncall). When estimating the risk neutral density, the
+method proposed by @vilsmeier2014 assigns density to the interval with
+payoff of zero $[0,D]$ such that an optimal fit to observed option
+prices is achieved. Analogously to equation \@ref(eq:pod), the option
+implied probability of default is given by
+
+```{=tex}
+\begin{equation}
+PoD(D) = \int^D_0 f(V_T)dV_T
+\end{equation}
+```
+
+Similarly as in section \@ref(capuanoframework), both $f(V_T)$ and $D$
+need to be determined for obtaining the option implied probability of
+default. @vilsmeier2014 equally minimises the cross entroy function by
+@kullback1951 stated in equation \@ref(eq:crossentropy) for a given
+prior distribution $f^0(V_T)$ under the moment constraints given by
+equation \@ref(eq:capuanocond2) and equation \@ref(eq:capuanocond3),
+however @vilsmeier2014 does not take equation \@ref(eq:capuanocond1) into
+account for the optimisation. Note that @vilsmeier2014 also includes the
+current stock price to the considered options with a strike price of zero.
+The resulting Lagrangian is given by
+
+```{=tex}
+\begin{equation}
+\begin{aligned}
+\mathcal{L} ={} & \int^\infty_{V_T=0}f(V_T)\log\biggl[ \frac{f(V_T)}{f^0(V_T)} \biggr]dV_T
++ \lambda_0 \biggl[ 1-\int^\infty_{V_T=0}f(V_T)dV_T \biggr]\\
+& + \sum^n_{i=1}\lambda_i\biggl[ C^i_0 - e^{-rT} \int^\infty_{V_T=D+K_i}(V_T-D-K_i)f(V_T)dV_T \biggr]
+\end{aligned}
+\end{equation}
+```
+
+As described in Section \@ref(capuanoframework), a non-linear system of
+equations is obtained from the Lagrangian, which in @capuano2008 is
+solved numerically. @vilsmeier2014 states, that the process of finding
+roots is unstable and converges only for a small number of constraints
+and the initial values of $\lambda$ are chosen near to the final
+solution. Using an approach introduced by @alhassid1978, @vilsmeier2014
+proposes a robust and computationally efficient algorithm which he used
+to calculate the optimal set of $\lambda$. The new objective function proposed by @vilsmeier2014 is given by^[For further details about the
+derivation of the proposed new objective function, see @vilsmeier2014
+Chapter 3.2]
+
+```{=tex}
+\begin{equation}
+F = -\lambda_0^{Tr''} = \log \biggl\{ \int^{\infty}_{V_T=0} f^0(V_T) \exp \biggl[ \sum^{B}_{i=1} \lambda^{Tr}_i (e^{-rT} \mathbf{1}_{V_T>D+K_i}(V_T-D-K_i)-C^{K_i}_0) \biggr] dV_T \biggr\} (\#eq:objectivevilsmeier1)
+\end{equation}
+```
+
+Furthermore, @vilsmeier2014 assumes a finite domain for $V_T$ ranging
+from the lower bound $V_{\min} \in [0;D]$ to the upper bound $V_{\max}$
+whereby $V_{\min}<D<V_{\max}$, as well as a uniform prior distribution
+$f^0(V_T)=\frac{1}{V_{\max}-V_{\min}}$. With this assumptions, the
+integration in equation \@ref(eq:objectivevilsmeier1) can be solved
+analytically, which is why no numerical quadrature methods are necessary
+to obtain the $\lambda$'s. After rewriting the objective function without
+the indicator function and after solving the integrals analytically, the
+objective function is given by^[This function is implemented as
+`objectiveFunction` within the `optipod` function]
+
+
+```{=tex}
+\begin{equation}
+\begin{aligned}
+F ={} & \log \biggl( \frac{1}{V_{\max}-V_{\min}} \biggr) + \log \biggl\{ \exp
+        \biggl( -\sum^B_{i=1} w_i \lambda_i C^{K_i}_{0} \biggr) (D-V_{\min})  \\
+      & -\sum^{B-1}_{i=1} \biggl[ \frac{\exp \bigl( \sum^i_{j=1} w_j \lambda_j (
+         e^{-rT}(K_i-K_j)-C^{K_j}_0) - \sum^B_{k=i+1} w_k \lambda_k C^{K_k}_0 \bigr)}{
+         e^{-rT}(\sum^i_{j=1} w_j \lambda_j)} \\
+      & -\frac{\exp\bigl( \sum^i_{j=1} w_j \lambda_j(e^{-rT}(K_{i+1}-K_j)-C^{K_j}_0
+        -\sum^B_{k=i+1} w_k \lambda_kC^{K_k}_0) \bigr)}{e^{-rT}(\sum^i_{j=1} w_j \lambda_j)}
+        \biggr\} \biggr] \\
+      & - \biggl[ \frac{\exp\bigl( \sum^B_{j=1} w_j \lambda_j(e^{-rT}(K_B-K_j)-C^{K_j}_0)
+        \bigr)-\exp\bigl( \sum^B_{j=1} w_j \lambda_j(e^{-rT}(V_{\max}-D-K_j)-C^{K_j}_0)
+        \bigr)}{e^{-rT}(\sum^B_{j=1} w_j \lambda_j)} \biggr] \biggr\} (\#eq:objectivevilsmeier2)
+\end{aligned}
+\end{equation}
+```
+Minimizing the objective function stated in equation
+\@ref(eq:objectivevilsmeier2) results in the estimated optimal set of
+$\lambda$ given the default barrier $D$.
+
+Note that following @matros2012 weights $w$ that are pre-multiplied to
+the Lagrange multiplier are included in the objective function, such
+that more liquid option contracts have to be met more precisely by the
+estimated posterior distribution. @capuano2008 weighted the different
+contracts by trading volume. @matros2012 argue for weighting by open
+interest^[number of outstanding options] instead of trading volume,
+since trading volume of 0
+does not contain no information about expectations. Rather, if there was
+high trading in the past, which is captured in open interest, and no
+trading today, the expectations simply did not change. Unfortunately, in the
+data source used in this project, no information on open interest is
+available, which is why the sample was weighted by trading volume. In the
+studies of @zer2015 the option implied probability of default was calculated
+with both trading volume and open interest, whereby the results were
+qualitatively similar.
+
+
+As mentioned the estimation of the risk neutral density is allowed for a
+mass point at a future stock price of zero. As stated in section
+\@ref(capuanoframework), the prior distribution is chosen to be uniform,
+with the previously described domain bounds for $V_T$ therefore defined
+as $f^0(V_T)=\frac{1}{(V_{\max}-V_{\min})}$. Note that the payoff
+function in equation \@ref(eq:vilspayoff) for given $K$ both for
+$V_T > D$ and $V_T \leq D$ are the same for arbitrary intervals
+$[D,V_{\max}]$ respectively for arbitrary intervals $[V_{\min},D]$ with
+constant length. Hence, the domain bounds influence the estimates not
+through their actual values, but solely through the domain length
+$V_{\max}-V_{\min}$ [@vilsmeier2014]. As a result, @vilsmeier2014 states
+that book value based domain bounds as proposed in @capuano2008 lack
+practical significance and can possibly harm the estimation if the
+domain implied by book value is too short, whereby not enough possible
+payoffs to price the option contract would be available. When choosing
+the domain too long, i.e. longer than the "true" domain of the density
+that priced the observed prices, a density of practically zero will be
+assigned to the additional domain which exceeds the true upper bound,
+yielding no harm in the estimation process [@vilsmeier2014].
+
+The last model parameter to be determined is the threshold $D$ which
+will define the part of the domain in which the firm defaults. If
+$V_T \leq D$ the restriction given in equation \@ref(eq:capuanocond2)
+are zero while the additivity constraint as in equation
+\@ref(eq:capuanocond3) assigns constant density [@vilsmeier2014]:
+$$
+f^*(V_T)=\frac{1}{V_{\max}-V_{\min}}\frac{\exp(-\sum^B_{i=1}C^{K_i}_0\lambda_i)}{\exp{F}} \quad \forall V_T \in [V_{\min},D]
+$$
+
+Since the probability of default is given by the integral over
+$[V_{\min},D]$, the probability of default can be defined as
+
+```{=tex}
+\begin{equation}
+PoD(\lambda,D) = \frac{1}{V_{\max}-V_{\min}}\frac{\exp(-\sum^B_{i=1}C^{K_i}_0\lambda_i)}{\exp{F(\lambda,D)}} (D-V_{\min}) (\#eq:podfunc)
+\end{equation}
+```
+Equation \@ref(eq:podfunc) reveals that the density assigned to
+$[V_{\min},D]$ depends on the parameters $\lambda_i$ that define the
+shape of the posterior density, which implies that the probability of
+default and the shape of risk neutral densities for the domain
+$[D,V_{\max}]$ interact. Given $D$, the combination of the probability
+of default and the risk neutral density that fits the observed market
+prices best is optimal [@vilsmeier2014].
+
+To determine the optimal $D$, @vilsmeier2014 suggests a procedure based
+on the evolution of the PoD-function as defined in equation
+\@ref(eq:podfunc) and of the Lagrange multipliers $\lambda$ when estimating the
+optimal density for different levels of $D$. The characteristics of the
+evolution of these functions is not yet conclusively determined. The studies
+in @vilsmeier2014 indicate, however, that both the value of the probability
+of default and the sum of estimated $\lambda$'s flattens with increasing $D$,
+whereby the PoD-function is roughly concave, while the $\lambda$'s  exhibit
+strong fluctuations.
+
+Since there is no exact decision rule for determining the optimal $D$,
+@vilsmeier2014 proposes following ad hoc procedure. First, a lower and
+upper bound for $D$ is set. Concretely, backed by numerical experiments
+and empirical results, setting $V_{\min}=0$ and $D_{\max}=20$, all possible
+values of $D$ are given by
+${\mathcal{D} = \{ D | D\text{ is an integer, and } 0\leq D \leq 20 \}}$.
+Second, the probability of default is estimated for each $D$ in
+$\mathcal{D}$. Third, the average estimated probability of default over
+all considered $D$'s is calculated. Lastly, the $D$ and hence the length
+of the domain $[V_{\min},D]$ is determined by choosing the $D$ that
+provides the estimated probability of default closest to the average
+probability of default.
+
+After the optimal $D$ is determined, the option implied probability of
+default can be calculated using the $\lambda$'s obtained in equation
+\@ref(eq:objectivevilsmeier2) to define the shape of the posterior
+distribution.
+
+\newpage
+
+# Application of the Method {#application}
+
+## Data Sources {#data}
+
+For this project data for `r nrow(tickers)` holding companies with
+reported total assets greater than 10 billion US dollars according to
+the Federal Financial Institutions Examination Council^[
+\url{https://www.ffiec.gov/npw/Institution/TopHoldings}]
+obtained via the polygon.io API.^[All necessary functions to get the data
+are available on `GitHub`. Most of the data can be obtained with a free plan,
+however the API requests are limited to 5 calls per minute.]
+Polygon is a leading provider of
+low latency market data, which obtains its options data directly from
+the Options Price Reporting Authority (OPRA), therefore allowing them to
+publish reliable and accurate data. All option contracts with an
+expiration date in 2020 or newer were requested from 07. January 2019 up
+until 07. June 2023. To extend the observation period for 
+Credit Suisse, the major bank of
+interest in this study, additional option data since 2005 was collected
+from OptionMetrics via Wharton Research Data Services. OptionMetrics is
+an established data provider of historical option data for use in
+empirical research and econometric studies.
+
+Additionally to the options data, stock price data and data for the risk
+free rate for discounting was collected. For the period from mid 2021 to
+2023, the stock data was retrieved via the polygon.io API. 
+For Credit Suisse, the additional stock data since 2005 was obtained from
+Yahoo Finance. The risk free interest rate was downloaded from Kenneth
+R. Frenchs website.^[\url{https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html},
+function for auto-download available in `optipod`. For days which
+were not yet included in this data source, a constant risk free rate
+since the last observed value was assumed.]
+
+The data for one options chain, which consists of all option contracts with
+the same expiration date measured on the same date, can be represented as follows:
+
+```{r}
+dt <- as.data.table(dbGetQuery(db, "SELECT *
+                                    FROM dataset"))
+
+dt <- dt[underlying_ticker == "JPM"]
+dt <- dt[RF>0 & time_to_maturity > 30]
+dt <- dt[, count:=.N,by="id"][count==6]
+
+dt <- as.data.table(dbGetQuery(db, "SELECT *
+                                    FROM dataset
+                                    WHERE id==152045"))
+
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+dt <- dt[, expiration_date := as.Date(expiration_date, origin="1970-01-01")]
+
+dt <- data.table(
+  Date = format(dt$date, "%d.%m.%Y"),
+  `Expiration Date` = format(dt$expiration_date, "%d.%m.%Y"),
+  Price = dt$price,
+  `Strike Price` = dt$strike_price,
+  `Risk Free Rate` = dt$RF,
+  `Time to Maturity` = dt$time_to_maturity,
+  Weight = round(dt$weight, 2),
+  check.names = F
+)
+setorder(dt, `Strike Price`)
+
+knitr::kable(dt, caption="Example of Options Chain")
+```
+
+Each row corresponds to a specific option contract, which grants the
+holder of the option the right to buy the underlying stock at the
+corresponding strike price within the time to maturity.^[As the options under
+consideration have American exercise style.] Note that the first row
+corresponds to the current stock price which is included as an option
+contract with strike price 0 and a weight of 1, as mentioned in
+Section \@ref(vilsmeiermethod). Using this options chain, the option implied 
+probability of default as of the 5th of April 2022 can be calculated. When
+more than one option chain was traded on one day, i.e. when more than one
+expiration date were traded, the probability of default was calculated for
+each option chain. To get the daily estimate of the probability of default,
+the average probability of default over all option chains traded on this day
+was calculated.
+
+To classify the predictive power of the option implied probability of
+default, data for Credit Default Swaps for Credit Suisse were obtained
+from investing.com. Credit Default Swaps are financial derivatives, with
+which the buyer of the derivative insures against the possibility of
+default on a bond issued by a given entity, therefore making it possible
+to trade risk associated with the underlying entity [@longstaff2005].
+Therefore, higher default risk should be represented by higher prices for
+Credit Default Swaps.
+
+## Exploratory Data Analysis
+
+```{r}
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM options"))
+meta <- as.data.table(dbGetQuery(db, "SELECT * FROM tickers"))
+
+dt <- merge(
+  x = dt, y = meta,
+  by = "ticker",
+  all.x = T
+)
+
+dt <- dt[, date := as.POSIXct(t/1000, origin="1970-01-01")]
+dt <- dt[, date := as.Date(date)]
+
+dt <- dt[, id := paste0(underlying_ticker, date, expiration_date)]
+```
+
+As can be seen in equation \@ref(eq:capuanocond2), the number of
+conditions for the optimisation problem stated in equation
+\@ref(eq:objectivevilsmeier2) is dependent on how many options with
+different strike prices were traded and therefore priced on a specific
+day for a given expiration date. As the number increases, more
+conditions for the optimisation problem are available, possibly leading
+to a more accurate estimation of the posterior distribution. As can be
+seen in Figure \@ref(fig:nOptsAvg), the number of traded options with
+different strike prices varies strongly across different banks.
+
+```{r nOptsAvg, fig.cap="Average number of traded strike prices per option and day", fig.height=3.75}
+nOpts <- dt[, .(n_opts = .N), by = c("id", "underlying_ticker", "date")]
+nOptsAvg <- nOpts[, .(avg_opts = mean(n_opts)), by = underlying_ticker]
+
+par(las = 1, family = fontfamily, mgp = c(0, 0.25, -0.5))
+barplot(height = nOptsAvg$avg_opts, names.arg = nOptsAvg$underlying_ticker,
+        las=2, cex.axis=0.6, cex.names=0.5)
+```
+
+Additionally, when examining the number of options with different strike
+prices traded for a specific bank over time, it can be seen that this
+number also varies strongly over time. Figure \@ref(fig:nOptsCS) shows
+the dynamic of the number of traded options with different strike prices
+over time for Credit Suisse.
+
+```{r nOptsCS, fig.cap="Dynamics of average number of traded strikes per option and date (Credit Suisse)", fig.height=2.75}
+nOptsCS <- nOpts[underlying_ticker=="CS"]
+nOptsCS <- nOptsCS[, .(n_opts = mean(n_opts)), by=date]
+setorder(nOptsCS, date)
+
+par(las = 1, cex = 0.75, family = fontfamily)
+plot(x = nOptsCS$date, y = nOptsCS$n_opts, type="l",
+     xlab="", ylab="")
+```
+
+Furthermore, the trading volume, i.e. the number of traded options on a
+specific day, varies tremendously across different banks as visualised
+in Figure \@ref(fig:trvol).
+
+```{r trvol, fig.cap="Average Trading Volume per Bank", fig.height=3.75}
+
+volTot <- dt[, .(trvol = sum(v)), by = c("id", "underlying_ticker", "date")]
+volAvg <- volTot[, .(trvol = mean(trvol)), by = underlying_ticker]
+
+par(las = 1, family = fontfamily, mgp = c(0, 0.25, -0.5))
+barplot(height = volAvg$trvol, names.arg = volAvg$underlying_ticker,
+        las=2, cex.axis=0.6, cex.names=0.5)
+
+```
+
+Again looking at the dynamics for Credit Suisse, Figure
+\@ref(fig:trvolCS) shows that trading volume can vary strongly over time.
+
+```{r trvolCS, fig.cap="Dynamics of Trading Volume for Credit Suisse over time", fig.height=2.75}
+volTotCS <- volTot[underlying_ticker=="CS"]
+volAvgCS <- volTotCS[, .(trvol = mean(trvol)), by=date]
+setorder(volAvgCS, date)
+
+par(las = 1, cex = 0.75, family = fontfamily)
+plot(x = volAvgCS$date, y = volAvgCS$trvol, type="l",
+     xlab="", ylab="")
+
+```
+
+In general, ceteris paribus it can be assumed that with more strike
+prices (leading to more constraints in the optimisation problem) and
+with higher trading volume (information about the expectations of more
+investors revealed), the posterior distribution can be estimated more
+accurately. The underlying argument is, that the principle
+of minimum cross-entropy can only recover the distribution closest to
+the true distribution if the true distribution is reflected in the
+observable data, as mentioned in @capuano2008.
+
+## Empirical Implementation {#empimp}
+
+```{r}
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM dataset"))
+dt <- dt[, date := as.Date(date, origin = "1970-01-01")]
+dt <- dt[date >= as.Date("2022-01-01")]
+CS <- dt[underlying_ticker == "CS"]
+JPM <- dt[underlying_ticker == "JPM"]
+```
+
+With more strike prices and therefore more constraints that need to be
+satisfied, the computation time for estimating the probability of
+default increases quite drastically. For estimating the probability of
+default for Credit Suisse between `r format(min(CS$date), "%B %Y")` to
+`r format(max(CS$date), "%B %Y")`, `r formatC(nrow(CS),big.mark="'")`
+option contracts are available for estimating
+`r formatC(length(unique(CS$id)), big.mark="'")` probabilities of
+default in total. Therefore, on average
+`r round(nrow(CS)/length(unique(CS$id)),2)` conditions are considered
+for the optimisation problem. The estimation process for Credit Suisse
+took about 40 minutes. For the same period of time
+`r formatC(nrow(JPM),big.mark="'")` are available for estimating
+`r formatC(length(unique(CS$id)), big.mark="'")` probabilities of
+default in total (`r round(nrow(JPM)/length(unique(JPM$id)),2)` on
+average) for JPMorgan Chase & Co. (JPM). The estimation process for JPM
+took about 36 hours. Hence, due to this computational limitations, the
+probability of default could not be estimated for all retrieved options.
+The sample was reduced on Credit Suisse, 3 banks similar to Credit
+Suisse in terms of total asset value according to the Federal Financial
+Institutions Examination Council^[\url{https://www.ffiec.gov/npw/Institution/TopHoldings}],
+JP Morgan Chase & Co. as the largest bank as a benchmark and UBS as the
+other Swiss Bank traded in the US market. Additionally, the observation period
+was limited to 2022 onwards. The procedure for estimating the
+option implied probability of default, as theoretically described in Section
+\@ref(vilsmeiermethod), can be summarised and represented in Pseudo-Code as
+follows:
+
+```{=tex}
+\begin{algorithm}
+  \caption{Estimation of Option implied Probability of Default}\label{ipod}
+  \begin{algorithmic}[1]
+    \Procedure{estimate iPoD}{}%\Comment{The g.c.d. of a and b}
+      \State
+      \For{every $D$ in $\mathcal{D}$}
+        \State solve objective function defined in equation (19)
+        \State with returned $\lambda$'s, determine posterior distribution
+        \State PoD $\gets$ integration of posterior over $[0,D]$
+      \EndFor
+      \State
+      \State average PoD $\gets$ mean over all obtained PoD's
+      \State optimal $D$ $(D^*) \gets$ $D$ for which $min(|PoD(D)-\text{average }PoD|)$
+      \State
+      \State \textbf{return} estimated PoD with $D^*$
+      \State
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+```
+
+This algorithm is implemented in `R` and is available as the function
+`optipod` within the `GitHub`-Repository^[\url{https://github.com/bt-koch/optipod}]
+which was created for this project. Note that the code underlying this function
+was provided by Johannes Vilsmeier. Since the code was refactored in the process
+of this project, possible errors might were included in the original code.
+
+```{r}
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM results"))
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+
+dt <- dt[, na := ifelse(is.na(PoD), T, F)]
+nas <- round(mean(dt$na)*100, 2)
+nas <- paste0(nas, "%")
+
+dt <- dt[, explodes := ifelse(PoD > 1, T, F)]
+```
+
+For about `r nas` of considered option chains, the estimation process
+returned no result. The reason for the failed estimates still needs to
+be clarified. Additionally, for some option chains the estimated result
+explodes and reaches values in the trillions, despite that the expected
+results should be bounded between 0 and 1. Note that this only happened
+to the four banks Credit Suisse, Silicon Valley Bank, First Republic and
+Mizuho Financial Group, whereby the first three went bankrupt in 2023.
+For Credit Suisse, this explosion
+happened at the beginning of the Covid-19 pandemic in March, April and
+May 2020 as well as in every month since June 2022. For Mizuho Financial
+Group, during the whole sample since January 2022 exploded results can
+be observed.
+
+The reason for this problem might be that the considered domain $[D,V_{\max}]$ 
+might have been too short. Following the code which was provided by
+Johannes Vilsmeier, $V_{\min}$ was chosen to be 0 and $V_{\max}$ was chosen
+to be five times the current stock price. @vilsmeier2014 states that $V_{\max}$
+should be large but can be arbitrarily chosen since it does not significantly
+influence the estimates. With the current approach to determine
+$V_{\max}$ using a multiple of the current stock price, the set value of
+$V_{\max}$ is obviously dependent on the development of the stock price.
+The stock price for example for Credit Suisse, as visualised in Figure
+\@ref(fig:csstock), varied strongly within the past 18 years.
+
+```{r csstock, fig.cap="Credit Suisse Stock Price", fig.height=2.75}
+csstock <- as.data.table(read.csv("../data/cs-yahoo.csv"))
+csstock <- csstock[, date := as.Date(Date, "%Y-%m-%d")]
+
+par(family = fontfamily, cex=0.75)
+plot(csstock$date, csstock$Close, type="l", xlab="", ylab="Stock Price (USD)")
+
+rm(csstock)
+```
+
+Figure \@ref(fig:domlen) shows the number of considered domain lengths as well
+as the number of exploded estimates per domain length. It can be seen that the
+optimisation procedure breaks if the domain length is too short. Since
+computational limits were present in this project because of the reported
+running time, a detailed analysis of the behaviour of the optimisation
+procedure and its results for different multiplication factors was not
+possible.^[Running time increased further with higher domain lengths. Using a
+multiplication factor of 5, 10 and 30, running time was around 40 minutes,
+one hour and two hours respectively.]
+
+```{r domlen, fig.cap="Histrograms of Domain Lengths", fig.height=3}
+dt <- dt[, domain_length := Vmax-Dopt]
+dt_expl <- copy(dt)[explodes==T]
+
+res <- hist(dt$domain_length, breaks=50, plot=F)
+
+minX <- min(dt$domain_length)
+maxX <- max(dt$domain_length)
+minY <- min(res$counts)
+maxY <- max(res$counts)
+
+par(mfrow=c(1,2), family = fontfamily, cex=0.6)
+hist(dt$domain_length, main="Domain Lengths of all Option Chains", xlab="",
+     xlim=c(minX, maxX), ylim=c(minY, maxY), breaks=res$breaks)
+hist(dt_expl$domain_length, main="Domain Lengths of exploded estimates", xlab="",
+     xlim=c(minX, maxX), ylim=c(minY, maxY), breaks=res$breaks)
+```
+
+Another issue in the estimation process discussed in @matros2012 is the
+maturity dependence of the risk neutral density estimates. As described,
+risk neutral densities reveal information about the expectations
+regarding the value of an options underlying at the date of expiration.
+If risk neutral densities are estimated for subsequent days using
+options with the same date of expiration, risk neutral densities that
+are estimated closer to the date of expiration will exhibit ceteris
+paribus less uncertainty regarding the value of the underlying at
+expiration date. @matros2012 apply a regression based procedure to
+remove this maturity dependence. Currently, the results presented in
+this analysis are not corrected for maturity dependence. However,
+@matros2012 stated that this maturity correction only increase the
+estimates systematically, but does not change the dynamics of the
+obtained time series. As will be addressed later, it seems that the
+dynamics of the estimates is of more interest than the estimated value
+itself, this correction is omitted for the time being.
+
+\newpage
+
+# Results
+
+Figure \@ref(fig:cs) shows the daily estimates of the option implied
+probability of default for Credit Suisse since 2005 as well as the
+corresponding 7 days moving average to make the dynamics more visible.
+Note that for obtaining this estimates, the upper limit of the domain
+$[D,V_{\max}]$ was chosen as the current stock price multiplied by 30 to
+avoid exploded estimates which occured during the Covid-19 Pandemic and
+the most recent banking crisis when estimating with a multiplication
+factor of 5, which was used when first estimating and for the other
+banks considered.
+
+```{r cs, fig.cap="Estimated Probability of default for Credit Suisse (2005-2023)", fig.height=3.5}
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM results_multip30"))
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+setorder(dt, date)
+
+dt <- dt[, .(PoD = mean(PoD, na.rm=T)), by=date]
+dt <- dt[, ma := rollmean(PoD, k=7, align="center", fill=NA)]
+
+par(family = fontfamily, cex=0.75)
+plot(x=dt$date, y=dt$PoD, type="l",  xaxt="n", xlab="", ylab="PoD", col="gray")
+lines(x=dt$date, y=dt$ma)
+axis(1, at=seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by="year"),
+     labels=format(seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by="year"), "%Y"),
+     las=2)
+legend("topleft", legend=c("PoD (daily estimate)", "PoD (7 days moving average)"),
+       lty = c(1,1), col=c("gray", "black"))
+```
+
+In the dynamics of the obtained estimates, episodes of increased stress
+in the financial sector, such as the World Financial Crisis 2008/2009 and
+its aftermath, the Euro Crisis or the Covid-19 Pandemic, are visible and
+represented as episodes with relatively higher estimates for the probability
+of default. The most visible dynamic in Figure \@ref(fig:cs) is the huge
+increase in the estimates for Credit Suisse since its collapse in March 2023.
+
+In put this huge increase into perspective, Figure \@ref(fig:cmprbanks)
+compares the estimates of the option implied probability of default for
+Credit Suisse (CS) with estimates of selected other banks. Valley National Bancorp
+(VLY) as well as Wintrust Financial Corp (WTFC) were selected because they
+exhibit a similar value of total assets to Credit Suisse (57.5 mio USD, 52.9
+mio USD and 57.4 mio USD accordingly)^[https://www.ffiec.gov/npw/Institution/TopHoldings].
+Further UBS, as the other Swiss Bank, was included in the sample to observe
+whether or how market participants' expectations changed for this bank as
+well. Additionally, since Credit Suisse will take over Credit Suisse,
+observing the dynamics of the estimates of UBS after the collapse of
+Credit Suisse are of interest. Finally, JPMorgan (JPM) as the biggest bank
+according to the value of total assets is included.
+
+```{r cmprbanks, fig.cap="Comparison of selected banks (January 2022 - March 2023)", fig.height=3.5}
+temp1 <- as.data.table(dbGetQuery(db, "SELECT *
+                                       FROM results
+                                       WHERE underlying_ticker
+                                       IN ('VLY', 'WTFC', 'UBS', 'JPM')"))
+temp2 <- as.data.table(dbGetQuery(db, "SELECT * FROM results_multip30"))
+dt <- rbind(temp1, temp2)
+xMin <- min(temp1$date)
+xMax <- max(temp1$date, temp2$date)
+yMin <- min(dt$PoD, na.rm=T)
+yMax <- max(dt$PoD, na.rm=T)*1.1
+rm(temp1, temp2)
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+
+par(mfrow=c(5, 1), mar=c(0,5,0,2), oma = c(5, 2, 2, 2), family=fontfamily)
+for(tckr in c("CS", "VLY", "WTFC", "UBS", "JPM")){
+
+  temp <- dt[underlying_ticker == tckr]
+  temp <- temp[date >= xMin]
+  setorder(temp, date)
+  
+  temp <- temp[, .(PoD = mean(PoD, na.rm=T)), by=date]
+  
+  plot(x = temp$date, y = temp$PoD, type="l", xlim=c(xMin,xMax), ylim=c(yMin,yMax),
+       ylab=tckr, xaxt="n", yaxt="n")
+  abline(v=as.Date("2023-03-15"), col="grey")
+  lines(x = temp$date, y = temp$PoD)
+  axis(2, at=seq(0, 0.6, 0.2), labels=seq(0, 0.6, 0.2), las=1)
+  if(tckr=="JPM"){
+    axis(1, at=seq(as.Date("2022-01-01"), as.Date("2023-06-01"), by="month"),
+     labels=format(seq(as.Date("2022-01-01"), as.Date("2023-06-01"), by="month"), "%b %Y"),
+     las=2)
+  }
+  if(tckr=="CS"){
+    legend("topleft", legend="15.03.2023", lty=1, col="gray")
+  }
+}
+
+```
+
+As can be seen in Figure \@ref(fig:cmprbanks), when the Swiss National Bank
+(SNB) and the Swiss Financial Market Supervisory Authority (FINMA) published
+their media statement about market uncertrainty and that the SNB will provide
+liquidity to Credit Suisse if necessary^[https://www.snb.ch/en/mmr/reference/pre_20230315/source/pre_20230315.en.pdf]
+on the 15. of March 2023, the estimates for Credit Suisse
+increased strongly relatively to its own history, while the estimates of the
+other banks remained relatively constant. However, when looking at the estimates
+for Valley National Bancorp, the magnitude of the increase for Credit Suisse
+is somewhat mitigated. An important note is that for Credit Suisse's estimates
+the multiplication factor for the current stock price to obtain $V_{\max}$ was
+set to 30 to avoid breaking the optimisation problem, while for the other banks
+this multiplication factor was set to 5 as in the application of the method in
+@vilsmeier2014. According to @vilsmeier2014, the domain length for estimating
+the posterior distribution and therefore the value of $V_{\max}$ can be chosen
+very large without significantly altering the results, which is why the obtained
+estimates should theoretically still be comparable, even with the different
+multiplication factor. Figure \@ref(fig:diff) displays the difference in the
+estimates obtained using a multiplication factor of 5 compared to 30:
+
+```{r diff, fig.cap="Difference in estimates (multiplication factor 5 vs. 30)", fig.height=2.75}
+
+dt30 <- as.data.table(dbGetQuery(db, "SELECT * FROM results_multip30"))
+dt30 <- dt30[, date := as.Date(date, origin="1970-01-01")]
+setorder(dt, date)
+
+dt30 <- dt30[, .(PoD = mean(PoD, na.rm=T)), by=date]
+dt30 <- dt30[, ma := rollmean(PoD, k=7, align="center", fill=NA)]
+
+
+# load and prepare estimates with multiplication factor 5
+temp1 <- as.data.table(dbGetQuery(db, "SELECT *
+                                       FROM results
+                                       WHERE underlying_ticker='CS'"))
+temp2 <- as.data.table(dbGetQuery(db, "SELECT *
+                                       FROM results_wrds"))
+dt5 <- rbind(temp1, temp2); rm(temp1, temp2)
+dt5 <- dt5[, date := as.Date(date, origin="1970-01-01")]
+setorder(dt5, date)
+
+dl <- copy(dt5)
+dl <- dl[, dl := Vmax-Dopt]
+dl <- dl[, .(dl = mean(dl, na.rm=T)), by=date]
+setorder(dt, date)
+
+# calculate daily mean
+dt5 <- dt5[, .(PoD5 = mean(PoD, na.rm=T)), by=date]
+
+diff <- merge(
+  x = dt30, y = dt5,
+  by = "date",
+  all = T
+)
+diff <- diff[, diff := (PoD5-PoD)*100]
+
+diff_m <- copy(diff)[, date := paste0(substr(date, 1, 7), "-01")]
+diff_m <- diff_m[, date := as.Date(date)]
+diff_m <- diff_m[, .(diff = mean(abs(diff), na.rm=T)), by=date]
+
+yMin <- min(diff$diff, na.rm=T)*1.04
+yMax <- 104
+
+par(family = fontfamily, cex=0.75, mar=c(5.1, 4.1, 4.1, 4.1))
+plot(x=dl$date, y = dl$dl, type="l", col="lightblue", xaxt="n", yaxt="n",
+     xlab="", ylab="")
+polygon(c(dl$date, rev(dl$date)), c(dl$dl, rep(0, length(dl$dl))),
+        col = "lightblue", border=NA)
+axis(side=4, at = pretty(c(min(dl$dl), max(dl$dl)), n=10))
+mtext("Domain Length", side=4, line=3, cex=0.75)
+par(new=T)
+plot(diff$date, diff$diff, type="l", xlab="", ylab="Difference in Percentage Points",
+     col=rgb(0.5, 0.5, 0.5, alpha = 0.5), xaxt="n", ylim=c(yMin,yMax))
+lines(diff_m$date, diff_m$diff)
+axis(1, at=seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by="year"),
+     labels=format(seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by="year"), "%Y"),
+     las=2)
+legend("top", legend=c("Difference daily estimates",
+       "Monthly mean absolute difference", "Domain Length"), cex=0.75,
+       lty = c(1,1,1), lwd=c(1,1,3), col=c("gray", "black", "lightblue"))
+
+```
+
+Note that the maximal displayed difference is limited to around 100 percentage
+points to keep the dynamics of differences as well as the relationship between
+the differences and the domain length more visible. In case of exploded
+estimates, differences reach values in the quadrillions percentage points.
+As visible in Figure \@ref(fig:diff), the differences between the estimates
+for larger domain lengths are neglectable and increase as domain length decreases.
+Figure \@ref(fig:diff) seems to confirm @vilsmeier2014, who states that very
+large domain lengths do not influence the estimates significantly, while domain
+lengths that are too short can seriously distort the results. As stated in
+@vilsmeier2014, the reason why domain lengths can be chosen to be very large
+is that the density that will be assigned to high asset value will practically
+be zero. Figure \@ref(fig:pdf), which displays the probability density functions
+of some obtained posterior distributions confirms this statement by
+@vilsmeier2014.
+
+```{r pdf, echo=FALSE, fig.cap="Estimated posterior distributions for Credit Suisse", message=FALSE, warning=FALSE, fig.height=3.5}
+# database query for metadata (tickers) and data (options)
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM dataset WHERE underlying_ticker='CS'"))
+dtWRDS <- as.data.table(dbGetQuery(db, "SELECT * FROM dataset_WRDS"))
+stopifnot(!any(dt$id %in% dtWRDS$id))
+dt <- rbind(dtWRDS, dt); rm(dtWRDS)
+
+# parse date
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+
+# order dt
+dt <- dt[order(dt$id, dt$strike_price), ]
+
+par(mfrow=c(2,2), mar=c(4, 4.1, 2, 2.1), cex=0.5, family = fontfamily) #mar=c(3,3,3,2)
+
+temp <- dt[id == 3700]
+mu <- temp$price
+K <- temp$strike_price
+r <- unique(temp$RF)
+ttm <- unique(temp$time_to_maturity)/365
+Lweights <- temp$weight
+Vmin <- 0
+Vmax <- mu[1]*5
+t <- optipod(mu=mu,K=K,r=r,ttm=ttm,Lweights=Lweights,
+             multiplicationFactor = 30,
+             visualise = T, ticker="Credit Suisse", date=format(unique(temp$date), "%d.%m.%Y"))
+
+temp <- dt[id == 12211]
+mu <- temp$price
+K <- temp$strike_price
+r <- unique(temp$RF)
+ttm <- unique(temp$time_to_maturity)/365
+Lweights <- temp$weight
+t <- optipod(mu=mu,K=K,r=r,ttm=ttm,Lweights=Lweights,
+             multiplicationFactor = 30,
+             visualise = T, ticker="Credit Suisse",
+             date=format(unique(temp$date), "%d.%m.%Y"))
+
+temp <- dt[id == 86857]
+mu <- temp$price
+K <- temp$strike_price
+r <- unique(temp$RF)
+ttm <- unique(temp$time_to_maturity)/365
+Lweights <- temp$weight
+t <- optipod(mu=mu,K=K,r=r,ttm=ttm,Lweights=Lweights,
+             multiplicationFactor = 30,
+             visualise = T, ticker="Credit Suisse", date=format(unique(temp$date), "%d.%m.%Y"))
+
+temp <- dt[id == 89803]
+mu <- temp$price
+K <- temp$strike_price
+r <- unique(temp$RF)
+ttm <- unique(temp$time_to_maturity)/365
+Lweights <- temp$weight
+t <- optipod(mu=mu,K=K,r=r,ttm=ttm,Lweights=Lweights,
+             multiplicationFactor = 30,
+             visualise = T, ticker="Credit Suisse", date=format(unique(temp$date), "%d.%m.%Y"))
+
+```
+
+In order to assess the predictive power of the option implied probability of
+default, Figure \@ref(fig:cdsVSpod) and \@ref(fig:cdsVSpod21) compare the
+movement of this measure to the movement to Credit Default Swap prices.
+Figure \@ref(fig:cdsVSpod) shows the entire time series since 2005, while
+Figure \@ref(fig:cdsVSpod21) focuses on the most recent turmoil of Credit Suisse,
+whereby the period since the publication of the statement by SNB and FINMA
+is marked blue. Note that the magnitude of the measures cannot
+be directly compared using this plot, only the change of the measures relative
+to their own history can indicate how the measures react to increased or 
+decreased episodes of financial stress. Figure \@ref(fig:cdsVSpod) shows that
+both measures identify the same episodes of increased financial distress for
+the period since 2005 up until the end of 2021. 
+
+```{r cdsVSpod, fig.cap="Probability of Default and CDS 2005-2023 (Credit Suisse)", fig.height=3.5}
+# prepare cds price data
+cds <- as.data.table(read.csv("../data/cds/CSGN5YEUAM=R Overview.csv"))
+cds <- cds[, date := as.Date(Date, "%m/%d/%Y")]
+cds <- cds[, price := gsub(",", "", Price)]
+cds <- cds[, price := as.numeric(price)]
+setorder(cds, date)
+
+# prepare PoD data
+dt <- as.data.table(dbGetQuery(db, "SELECT * FROM results_multip30"))
+dt <- dt[, date := as.Date(date, origin="1970-01-01")]
+setorder(dt, date)
+dt <- dt[, .(PoD = mean(PoD, na.rm=T)), by=date]
+dt <- dt[, ma := rollmean(PoD, k=7, align="center", fill=NA)]
+
+# get xlim
+minDate <- min(cds$date, dt$date)
+maxDate <- max(cds$date, dt$date)
+
+# make plot
+par(mar = c(5, 4, 4, 4) + 0.3, family = fontfamily, cex=0.75)
+plot(dt$date, dt$PoD, type="l", xlim=c(minDate, maxDate), axes=F, xlab="", ylab="",
+     col="grey")
+# lines(dt$date, dt$ma)
+axis(side=4, at = seq(0, 1, 0.2))
+mtext("PoD", side=4, line=3, cex=0.75)
+par(new = TRUE, cex=0.75)
+plot(cds$date, cds$price, type="l", xlim=c(minDate, maxDate), xlab="", xaxt="n",
+     ylab="5-year CDS Price", lty=2, col="darkblue")
+axis(1, at = seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by = "year"),
+     labels = format(seq(as.Date("2005-01-01"), as.Date("2023-01-01"), by = "year"), "%Y"),
+     las=2)
+legend("topleft", legend=c("daily PoD estimates", "CDS"), lty = c(1,2),
+       col=c("gray", "black"))
+```
+
+Examining the period since 2022 more carefully, Figure \@ref(fig:cdsVSpod21)
+shows that Credit Default Swaps seem to indicate a steadily increase of
+risk for Credit Suisse from the second half of 2022 onwards. Meanwile, the
+option implied probability of default rather shows the opposite up until the
+beginning of March 2023, when first a modest increase is visible, which results
+in a sharp increase on the 15. of March. After a small descent at a high level, the
+CDS price rises starting in February 2023, again with a huge increase observable
+on the 15. of March.
+
+```{r cdsVSpod21, fig.cap="Probability of Default and CDS 2022-2023 (Credit Suisse)", fig.height=3.5}
+# filter data
+cds <- cds[date >= as.Date("2021-01-01")]
+dt <- dt[date >= as.Date("2021-01-01")]
+
+# get xlim
+minDate <- min(cds$date, dt$date)
+maxDate <- max(cds$date, dt$date)
+
+# make plot
+par(mar = c(5, 4, 4, 4) + 0.3, family = fontfamily, cex=0.75)
+plot(dt$date, dt$PoD, type="l", xlim=c(minDate, maxDate), axes=F, xlab="", ylab="")
+axis(side=4, at = seq(0, 1, 0.2))
+mtext("PoD", side=4, line=3, cex=0.75)
+rect(xleft=as.Date("2023-03-15"), xright=as.Date("2023-10-01"),
+     ybottom=-10, ytop=110, col="lightblue", border="lightblue")
+lines(dt$date, dt$PoD, type="l")
+
+par(new = TRUE, cex=0.75)
+plot(cds$date, cds$price, type="l", xlim=c(minDate, maxDate), xlab="", xaxt="n",
+     ylab="5-year CDS Price", lty=2, col="darkblue")
+axis(1, at = seq(as.Date("2021-01-01"), as.Date("2023-06-01"), by = "month"),
+     labels = rep("", length(seq(as.Date("2021-01-01"), as.Date("2023-06-01"), by = "month"))),
+     las=2)
+axis(1, at = seq(as.Date("2021-01-01"), as.Date("2023-06-01"), by = "3 month"),
+     labels = format(seq(as.Date("2021-01-01"), as.Date("2023-06-01"), by = "3 month"), "%b %Y"),
+     las=2)
+legend("topleft", legend=c("daily PoD estimates", "CDS"), lty = c(1,2))
+```
+
+In this concrete application, using the data described in Section \@ref(data)
+and the method described in Section \@ref(empimp), the prices of Credit Default
+Swaps appear to have more predictive power than the option implied probability.
+The option implied probability of default estimates obtained here did not
+indicate the increased risk in advance to officially released information.
+However, the measure reacted as expected to the official reported
+default of Credit Suisse.
+
+\newpage
+
+# Conclusion
+
+The results of this project show, that the measure of option implied
+probability of default reacts to major events as expected, but the
+predictive power of this measure as found in @capuano2008 and @matros2012
+compared to Credit Default Swaps could not be confirmed for this specific
+application on Credit Suisse. However, the results are not intended to
+prove the validity or invalidity of this measure but might indicate that
+further research and a more extensive application on the banking crisis
+could be worthwhile to further assess why this measure works for some
+applications and does not work in other. For more detailed information about
+the measure and its properties, please refer to @vilsmeier2014. Further
+research could address in particular the determination of the threshold
+$D$ and $V_{\max}$ which will define the domain bounds considered in the
+optimisation problem.
+
+A potential problem within this project could be the data used. All available
+option chains were used for the estimations, whereby the weighting of
+specific option contracts was made only within the corresponding option
+chains. Therefore, the estimate which is based on an option chain which
+includes many different option contracts which were traded frequently is
+treated equally with an estimate obtained from an option chain which possibly
+only includes one option in addition to the current stock price. Put differently,
+estimates based on option chains that contain a lot of information, and
+therefore could potentially better reflect market participants' true
+expectations, are treated equally to estimates based on option chains that
+contain little information, and potentially do not reflect market
+expectations at all. This could potentially alter the dynamics of the resulting
+time series or can directly alter the daily
+estimate of the probability of default, since the daily estimates were obtained
+by taking the unweighted average of the estimates based on all option chains
+on the corresponding day. Therefore, it would need to be examined in more
+detail whether the data set provided to the estimation process would need to
+be filtered before use. In addition, the method of aggregating estimates that are
+based on different option chains, but were traded on the same day, needs to be
+further investigated. The probably better approach would have been to
+consider all contracts traded on the same day within the same optimisation problem,
+since the different expiration dates of the contracts would have already been
+considered by the discounting factor that depends to the time to maturity.
+Since this approach would require strong modifications of the code for
+the estimation process, this approach was not implemented within this project.
+The problem could potentially also be addressed by using a weighted rather
+than an unweighted average, giving greater weight to option chains that
+reveal more reliable information.
+
+@matros2012 demonstrate in their studies further possible applications
+of the option implied probability as an indicator for systemic risk,
+thus expanding this concept as a purely idiosyncratic measure. Analysing
+the dynamics of their obtained systematic risk, @matros2012 showed high
+signalling and predictive power of this measure. Additionally,
+@matros2012 showed three indicators measuring the risk of a specific
+bank relative to the prevailing risk in the financial sector, relative
+to the risk of the most resilient bank within the sector as well as
+relative to the bank's risk in the past. With their relative risk
+analysis, @matros2012 could identify the high risk banks before the
+bankruptcy of Lehman Brother's.
+
+Since only observed market data is used for estimating the measure of
+the option implied probability of default, this measure could indicate
+the build up of default risk for a specific firm, or with the extensions
+from @matros2012 of the financial sector as a whole, even on an intra-day
+frequency. Therefore, this measure could be a highly attractive indicator
+for monitoring the banking sector.
+
+<!-- References --------------------------------------------------------------->
+
+\newpage
+\section*{References}
+
+The code used for this project can be found on GitHub:
+\mbox{\texttt{\url{https://github.com/bt-koch/optipod}}}
+\vspace{0.5cm}
+
+```{r}
+dbDisconnect(db)
+```
