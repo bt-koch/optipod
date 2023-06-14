@@ -8,6 +8,8 @@ which was updated by [Johannes Vilsmeier (2014)](https://www.bundesbank.de/en/pu
 For a full description of this project and further details, please consult
 the [final report](https://github.com/bt-koch/optipod/blob/master/report_final.pdf).
 
+Note that the files must be opened within the corresponding RProject.
+
 ## Statistical Framework
 
 This project applies the method of estimating option implied probability of
