@@ -8,7 +8,7 @@
 
 # Initialization ----
 # -----------------------------------------------------------------------------.
-start_time <- Sys.time()
+rm(list = ls()); gc()
 
 # database
 database <- "data/polygonDB.rsqlite"
@@ -76,7 +76,7 @@ dt <- dt[!(id %in% c(163872, 163934))]
 # -----------------------------------------------------------------------------.
 # 1.2 estimate PoD ----
 # -----------------------------------------------------------------------------.
-rm(list = ls()); gc()
+start_time <- Sys.time()
 for(i in unique(dt$id)){
 
   cat("\nLoop", counter, "of", length(unique(dt$id)))
