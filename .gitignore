@@ -9,3 +9,4 @@ data/apikey.txt
 data/polygonDB.rsqlite
 data/tickers.rds
 data/cs-wrds.csv
+data/csv/

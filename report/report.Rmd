@@ -146,7 +146,13 @@ microprudential measures and its corresponding policy advises and
 regulations try to ensure stability of individual financial firms, the
 macroprudential perspective is necessary for example to incorporate
 interactions among individual financial institutions or feedback loops
-of the financial sector with the real economy [@ecb2014].
+of the financial sector with the real economy [@ecb2014]. An important 
+note is that there is not a single indicator commonly used which
+is able to capture the risk within the financial sector. Rather, the
+literature has proposed various different indicators. @di2018 provide an
+overview of indicators that are used in publications of several institutions
+involved in macroprudential analysis and policy, such as the International
+Monetary Fund or the European Central Bank.
 
 This paper examines a framework to derive the probability of default
 for an individual firm implied by the market prices of corresponding
@@ -158,12 +164,10 @@ propose further an indicator based on the option implied probability
 which also signals the degree of distress in the financial sector as
 a whole, extending this concept with a macroprudential component. 
 
-***here include some other similar papers***
-
 @capuano2008 showed for his suggested method and @matros2012 for the
 updated method that the option implied probability of default is capable
 to signal the occurrence of adverse shocks to specific financial
-institution and in @matros2012 also to the financial sector as a whole
+institutions and in @matros2012 also to the financial sector as a whole
 for the US banking sector. This paper tries to contribute to the existing
 literature by testing this framework on the latest turmoil in the US
 banking sector, focusing on Credit Suisse as the only bank that failed
@@ -193,7 +197,7 @@ and discusses the results of the empirical application.
 The methodology of measuring the probability of default for a firm
 implied by observed option prices was first suggested by @capuano2008.
 To give intuition about the mechanism behind the suggested methodology,
-@capuano2008 remarks can be followed, for which two components are first
+the remarks of @capuano2008 can be followed, for which two components are first
 introduced. The first component assumes the balance sheet structure of a
 firm according to @merton1974. Consequently, to finance its assets $V$,
 a firm either uses its equity $E$ or takes up debt $D$. From the
@@ -210,8 +214,8 @@ E = \max(V-D; 0) (\#eq:equity)
 
 The second component that is used for the intuition behind the proposed
 methodology are equity options, or more precisely call options on the
-stock of a firm. A call option grants the right to the holder of the
-option to buy the underlying asset, here equity stocks, within a given
+stock of a firm. A call option grants the holder of the
+option the right to buy the underlying asset, here equity stocks, within a given
 time period^[American options can be exercised at any date before or at
 expiration. European options can only be exercised at expiration. In
 this analysis, we use american style options (due to data
@@ -446,7 +450,8 @@ PoD(D) = \int^D_0 f(V_T)dV_T
 \end{equation}
 ```
 
-Similarly as in section \@ref(capuanoframework), both $f(V_T)$ and $D$
+Similarly as in the methodology suggested by @capuano2008 described in
+section \@ref(capuanoframework), both $f(V_T)$ and $D$
 need to be determined for obtaining the option implied probability of
 default. @vilsmeier2014 equally minimises the cross entroy function by
 @kullback1951 stated in equation \@ref(eq:crossentropy) for a given
@@ -852,7 +857,7 @@ This algorithm is implemented in `R` and is available as the function
 `optipod` within the `GitHub`-Repository^[\url{https://github.com/bt-koch/optipod}]
 which was created for this project. Note that the code underlying this function
 was provided by Johannes Vilsmeier. Since the code was refactored in the process
-of this project, possible errors might were included in the original code.
+of this project, possible errors may have been introduced to the original code.
 
 ```{r}
 dt <- as.data.table(dbGetQuery(db, "SELECT * FROM results"))
@@ -1248,7 +1253,7 @@ option implied probability of default rather shows the opposite up until the
 beginning of March 2023, when first a modest increase is visible, which results
 in a sharp increase on the 15. of March. After a small descent at a high level, the
 CDS price rises starting in February 2023, again with a huge increase observable
-on the 15. of March.
+on the 15. of March 2023.
 
 ```{r cdsVSpod21, fig.cap="Probability of Default and CDS 2022-2023 (Credit Suisse)", fig.height=3.5}
 # filter data
