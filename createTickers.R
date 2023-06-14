@@ -1,17 +1,39 @@
+# =============================================================================.
+# Get equity tickers via polygon.io API
+# =============================================================================.
+# Using this script, equity tickers and their metadata for all underlyings is
+# requested from polygon.io API
+# =============================================================================.
+
+# Initialization ----
+# -----------------------------------------------------------------------------.
 rm(list=ls()); gc()
 library(devtools); load_all()
 library(jsonlite)
 library(data.table)
 
-apikey <- readLines("data/apikey.txt")
+# database
+database <- "data/polygonDB.rsqlite"
 
+# API key
+apikey <- readLines("data/apikey.txt")
+limitedAPIcalls <- F
+
+# objects ----
+# -----------------------------------------------------------------------------.
 tickers <- data.table()
 
+# functions ----
+# -----------------------------------------------------------------------------.
 saveTicker <- function(text){
   test <- as.data.table(test)
   test <- test[ticker == text]
   tickers <<- rbind(tickers, test, fill=T)
 }
+
+# =============================================================================.
+# Search for Tickers ----
+# =============================================================================.
 
 # search ticker for JPMorgan Chase
 test <- extractPolygonTickers(apikey, "JPMorgan")
@@ -33,6 +55,12 @@ saveTicker("WFC")
 test <- extractPolygonTickers(apikey, "Goldman")
 saveTicker("GS")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for Morgan Stanley
 test <- extractPolygonTickers(apikey, "Stanley")
 saveTicker("MS")
@@ -52,6 +80,12 @@ saveTicker("TFC")
 # search ticker for Charles Schwab Corporation
 test <- extractPolygonTickers(apikey, "Schwab")
 saveTicker("SCHW")
+
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
 
 # search ticker for TD Bank, N.A.
 # test <- extractPolygonTickers(apikey, "TD")
@@ -77,6 +111,12 @@ saveTicker("AXP")
 test <- extractPolygonTickers(apikey, "Citizens")
 saveTicker("CFG")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for HSBC Bank USA
 test <- extractPolygonTickers(apikey, "HSBC")
 saveTicker("HSBC")
@@ -96,6 +136,12 @@ saveTicker("FITB")
 # search ticker for Bank of Montreal
 test <- extractPolygonTickers(apikey, "BMO")
 saveTicker("BMO")
+
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
 
 # search ticker for United Services Automobile Association
 # test <- extractPolygonTickers(apikey, "USAA")
@@ -121,6 +167,12 @@ saveTicker("KEY")
 test <- extractPolygonTickers(apikey, "Huntington")
 saveTicker("HBAN")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for Barclays
 test <- extractPolygonTickers(apikey, "Barclays")
 saveTicker("BCS")
@@ -141,6 +193,12 @@ saveTicker("AMP")
 test <- extractPolygonTickers(apikey, "RF")
 saveTicker("RFpB")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for Northern Trust
 test <- extractPolygonTickers(apikey, "Northern")
 saveTicker("NTRS")
@@ -160,6 +218,12 @@ saveTicker("FCNCA")
 # search ticker for Synchrony Financial
 test <- extractPolygonTickers(apikey, "Synchrony")
 saveTicker("SYF")
+
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
 
 # search ticker for Deutsche Bank
 test <- extractPolygonTickers(apikey, "Deutsche")
@@ -185,6 +249,12 @@ saveTicker("RJF")
 test <- extractPolygonTickers(apikey, "Webster")
 saveTicker("WBS")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for Western Alliance Bank
 test <- extractPolygonTickers(apikey, "western")
 saveTicker("WAL")
@@ -204,6 +274,12 @@ saveTicker("EWBC")
 # search ticker for East West Bank
 test <- extractPolygonTickers(apikey, "EWBC")
 saveTicker("EWBC")
+
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
 
 # search ticker for Synovus
 test <- extractPolygonTickers(apikey, "Synovus")
@@ -225,8 +301,17 @@ saveTicker("MFG")
 test <- extractPolygonTickers(apikey, "Wintrust")
 saveTicker("WTFC")
 
+if(limitedAPIcalls){
+  cat("\nAPI request limit reached (5 calls per minute), wait for one minute... ")
+  Sys.sleep(60)
+  cat("continue!")
+}
+
 # search ticker for Cullen/Frost Bankers, Inc.
 test <- extractPolygonTickers(apikey, "cullen")
 saveTicker("CFR")
 
+# =============================================================================.
+# Save Tickers ----
+# =============================================================================.
 saveRDS(tickers, "data/tickers.rds")
