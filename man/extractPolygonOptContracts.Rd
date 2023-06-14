@@ -16,8 +16,25 @@ extractPolygonOptContracts(
 )
 }
 \arguments{
-\item{limitedAPIcalls}{}
+\item{apikey}{Personal API key for polygon.io}
+
+\item{tickers}{The ticker symbol of the options contract (vector of strings)}
+
+\item{from}{The start of the time window. Either a date with the format YYYY-MM-DD or a millisecond timestamp.}
+
+\item{to}{The end of the time window. Either a date with the format YYYY-MM-DD or a millisecond timestamp.}
+
+\item{database}{local rsqlite database to write data on}
+
+\item{adjusted}{Whether or not the results are adjusted for splits ("true" or "false")}
+
+\item{limit}{Limit of number of queries (maximum is 50000)}
+
+\item{limitedAPIcalls}{set TRUE if free plan (only makes 5 API calls per minute)}
+}
+\value{
+nothing, data is written on database
 }
 \description{
-extractPolygonOptContracts
+Get relevant option data for given ticker(s)
 }

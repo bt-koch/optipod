@@ -1,11 +1,11 @@
 #' extractFrench
 #'
+#' This function automatically downloads the relevant csv file for risk free
+#' rates from Kenneth R. Frenchs Website (https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html)
+#'
 #' @param path_out path in which CSV should be unpacked
 #'
 #' @return Fama/French 3 Factors daily data
-#' @export
-#'
-#' @examples
 extractFrench <- function(path_out = "./data"){
 
   # download URL

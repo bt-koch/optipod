@@ -13,5 +13,6 @@ extractFrench(path_out = "./data")
 Fama/French 3 Factors daily data
 }
 \description{
-extractFrench
+This function automatically downloads the relevant csv file for risk free
+rates from Kenneth R. Frenchs Website (https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html)
 }

@@ -1,13 +1,12 @@
 #' extractPolygonTickers
 #'
+#' Function to search for tickers
+#'
 #' @param apikey Personal API key for polygon.io
 #' @param search Search for terms within the ticker and/or company name
 #' @param limit Limit the number of results returned (maximum is 1000)
 #'
-#' @return tickers of Stocks/Equities, Indices, Forex, and Crypto
-#' @export
-#'
-#' @examples
+#' @return data.frame tickers of Stocks/Equities, Indices, Forex, and Crypto
 extractPolygonTickers <- function(apikey, search = NA, limit=100){
 
   # GET: /v3/reference/tickers

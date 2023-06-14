@@ -1,20 +1,17 @@
 #' extractPolygonOptContracts
 #'
-#' desc
+#' Get relevant option data for given ticker(s)
 #'
-#' @param apikey
-#' @param tickers
-#' @param from
-#' @param to
-#' @param adjusted
-#' @param limit
-#' @param database
-#' @param limitedAPIcalls
+#' @param apikey Personal API key for polygon.io
+#' @param tickers The ticker symbol of the options contract (vector of strings)
+#' @param from The start of the time window. Either a date with the format YYYY-MM-DD or a millisecond timestamp.
+#' @param to The end of the time window. Either a date with the format YYYY-MM-DD or a millisecond timestamp.
+#' @param adjusted Whether or not the results are adjusted for splits ("true" or "false")
+#' @param limit Limit of number of queries (maximum is 50000)
+#' @param database local rsqlite database to write data on
+#' @param limitedAPIcalls set TRUE if free plan (only makes 5 API calls per minute)
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return nothing, data is written on database
 extractPolygonOptContracts <- function(apikey, tickers, from, to, database,
                                        adjusted="true", limit=50000,
                                        limitedAPIcalls=TRUE){
@@ -39,7 +36,7 @@ extractPolygonOptContracts <- function(apikey, tickers, from, to, database,
   url_ext <- paste(adj, lmt, key, sep="&")
 
   if(limitedAPIcalls){
-    counter = 1
+    counter <- 1
   }
 
   for(ticker in tickers){
@@ -59,22 +56,25 @@ extractPolygonOptContracts <- function(apikey, tickers, from, to, database,
       # write data to database
       dbWriteTable(db, name="options", value=df, row.names=FALSE, append=TRUE)
 
+      if(nrow(df)==limit){
+        warning("limit reached, possibly more options are available")
+        stop()
+      }
+
     # case 2: there is no data for the ticker
     } else {
       cat("\nno data for", ticker)
     }
 
-    if(limitedAPIcalls & counter == 5){
-      counter <- 0
-      cat("\ngoing to sleep... ")
-      Sys.sleep(60)
-      cat("waking up!")
-    }
-
     if(limitedAPIcalls){
+      if(counter == 5){
+        counter <- 0
+        cat("\ngoing to sleep... ")
+        Sys.sleep(60)
+        cat("waking up!")
+      }
       counter <- counter+1
     }
-
   }
 
   # disconnect from database

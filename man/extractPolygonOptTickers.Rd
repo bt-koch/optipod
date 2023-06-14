@@ -6,28 +6,37 @@
 \usage{
 extractPolygonOptTickers(
   apikey,
-  limit = 100,
-  ticker,
+  tickers,
+  database,
+  limitedAPIcalls,
+  limit = 1000,
   contract_type = "call",
   expired = "true",
-  expiration_date.gte = NA
+  expiration_date.gte = NA,
+  expiration_date.lte = NA
 )
 }
 \arguments{
 \item{apikey}{Personal API key for polygon.io}
 
+\item{tickers}{tickers of the underlyings (vector of character string)}
+
+\item{database}{local rsqlite database to write data on}
+
+\item{limitedAPIcalls}{set TRUE if free plan (only makes 5 API calls per minute)}
+
 \item{limit}{Limit the number of results returned (maximum is 1000)}
 
-\item{ticker}{Underlying stock ticker for related contracts}
+\item{contract_type}{Type of contract ("call" or "put")}
 
-\item{contract_type}{Type of contract (call or put)}
-
-\item{expired}{Whether to query for expired or not expired contracts}
+\item{expired}{Whether to query for expired or not expired contracts ("true" or "false")}
 
 \item{expiration_date.gte}{contract expiration date greater than or equal to (format YYYY-MM-DD)}
+
+\item{expiration_date.lte}{contract expiration date smaller than or equal to (format YYYY-MM-DD)}
 }
 \value{
-historical option contracts
+nothing, data is written on database
 }
 \description{
 Function to get all option contract (tickers) for a specific underlying.

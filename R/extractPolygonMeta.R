@@ -1,12 +1,11 @@
 #' extractPolygonMeta
 #'
+#' get Metadata of selected ticker from polygon API
+#'
 #' @param apikey Personal API key for polygon.io
 #' @param ticker ticker for underlying
 #'
 #' @return metadata of underlying firm
-#' @export
-#'
-#' @examples
 extractPolygonMeta <- function(apikey, ticker){
 
   # GET: /v3/reference/tickers

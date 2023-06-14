@@ -15,5 +15,5 @@ extractPolygonMeta(apikey, ticker)
 metadata of underlying firm
 }
 \description{
-extractPolygonMeta
+get Metadata of selected ticker from polygon API
 }

@@ -14,8 +14,8 @@ extractPolygonTickers(apikey, search = NA, limit = 100)
 \item{limit}{Limit the number of results returned (maximum is 1000)}
 }
 \value{
-tickers of Stocks/Equities, Indices, Forex, and Crypto
+data.frame tickers of Stocks/Equities, Indices, Forex, and Crypto
 }
 \description{
-extractPolygonTickers
+Function to search for tickers
 }
