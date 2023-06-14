@@ -24,6 +24,8 @@ resulting in an estimate of the probability of default.
 Data since 2021 was obtained for several banks from  the [polygon.io API](https://polygon.io).
 Additionally, data since 2005 was obtained from
 [WRDS](https://wrds-www.wharton.upenn.edu) for Credit Suisse.
+Unfortunately, since the data is not openly accessible, the SQL database
+cannot be published in this repository.
 
 ## Results
 
