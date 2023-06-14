@@ -112,7 +112,8 @@ to 07. June 2023, therefore including the US banking crisis in March 2023.
 A special focus is set on Credit Suisse, which was announced to be taken
 over by UBS on the 19th of March 2023. The turmoil regarding Credit Suisse
 is reflected in the option implied probability of default, however, in this
-application the measure did not give an early warning in this application.
+application the measure did not provide early warning compared to officially
+published information.
 
 \newpage
 
