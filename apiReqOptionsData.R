@@ -49,7 +49,7 @@ extractPolygonOptContracts(apikey = apikey,
                            limit=50000,
                            limitedAPIcalls=F)
 
-
+# =============================================================================.
 cat("\nRuntime:")
 Sys.time() - start_time
 
