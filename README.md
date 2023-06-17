@@ -6,7 +6,7 @@ by observed market data using the method suggested by
 which was updated by [Johannes Vilsmeier (2014)](https://www.bundesbank.de/en/publications/research/discussion-papers/updating-the-option-implied-probability-of-default-methodology-703900).
 
 For a full description of this project and further details, please consult
-the [final report](https://github.com/bt-koch/optipod/blob/master/report_final.pdf).
+the [final report](https://github.com/bt-koch/optipod/blob/master/paper_final.pdf).
 
 Note that the files must be opened within the corresponding RProject.
 
