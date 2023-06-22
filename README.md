@@ -8,7 +8,8 @@ which was updated by [Johannes Vilsmeier (2014)](https://www.bundesbank.de/en/pu
 For a full description of this project and further details, please consult
 the [final report](https://github.com/bt-koch/optipod/blob/master/paper_final.pdf).
 
-Note that the files must be opened within the corresponding RProject.
+
+Note that the R files must be opened within the corresponding RProject.
 
 ## Statistical Framework
 
@@ -26,7 +27,7 @@ resulting in an estimate of the probability of default.
 Data since 2021 was obtained for several banks from  the [polygon.io API](https://polygon.io).
 Additionally, data since 2005 was obtained from
 [WRDS](https://wrds-www.wharton.upenn.edu) for Credit Suisse.
-Unfortunately, since the data is not openly accessible, the SQL database
+All required data is stored in an SQL database. Unfortunately, since the data is not openly accessible, this SQL database
 cannot be published in this repository.
 
 ## Results
